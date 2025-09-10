@@ -1,0 +1,188 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL Production
+  postgres-prod:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hrlead_prod
+      POSTGRES_USER: hrlead_prod
+      POSTGRES_PASSWORD: secure_production_password
+    volues:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./backup:/backup
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+
+  # Redis Production
+  redis-prod:
+    image: redis:7-alpine
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+
+  # API Gateway Production
+  api-gateway-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.gateway
+    ports:
+      - "80:8000"
+      - "443:8443"
+    environment:
+      - JWT_SECRET_KEY=your-super-secure-secret-key-change-this-in-production
+      - JWT_ALGORITHM=HS256
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service d'authentification Production
+  auth-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.auth
+    environment:
+      - JWT_SECRET_KEY=your-super-secure-secret-key-change-this-in-production
+      - JWT_ALGORITHM=HS256
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Service des employés Production
+  employee-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.employee
+    environment:
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Service des événements Production
+  event-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.event
+    environment:
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Service des congés Production
+  leave-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.leave
+    environment:
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Service des notifications Production
+  notification-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.notification
+    environment:
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - SMTP_SERVER=smtp.company.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=noreply@company.com
+      - SMTP_PASSWORD=secure_email_password
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Service des rapports Production
+  report-service-prod:
+    build:
+      context: .
+      dockerfile: backend/docker/Dockerfile.report
+    environment:
+      - DATABASE_URL=postgresql://hrlead_prod:secure_production_password@postgres-prod:5432/hrlead_prod
+      - REDIS_URL=redis://redis-prod:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres-prod
+      - redis-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway-prod
+    networks:
+      - hrlead-prod-network
+    restart: unless-stopped
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+
+networks:
+  hrlead-prod-network:
+    driver: bridge
