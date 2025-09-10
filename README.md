@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # HR Event & Leave Management System
 
 A comprehensive HR management tool built with React.js, TypeScript, FastAPI, and PostgreSQL. This system enables HR teams and employees to efficiently manage events, leave requests, and generate insightful reports.
@@ -368,3 +369,7 @@ For support and questions:
 ---
 
 Built with ❤️ by the HR Management Team
+=======
+# mymanager
+An SaaS mobile /desktop app defined for HR management focus on events which related to employees.
+>>>>>>> 83dda5a11cd1d81f670ba228a67d6ba5246634a8
