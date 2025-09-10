@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hrlead
+      POSTGRES_USER: hrlead
+      POSTGRES_PASSWORD: hrlead123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hrlead-network
+
+  # Redis pour le cache et les sessions
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - hrlead-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - JWT_SECRET_KEY=your-secret-key-change-in-production
+      - JWT_ALGORITHM=HS256
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service d'authentification
+  auth-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.auth
+    ports:
+      - "8001:8001"
+    environment:
+      - JWT_SECRET_KEY=your-secret-key-change-in-production
+      - JWT_ALGORITHM=HS256
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service des employés
+  employee-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.employee
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service des événements
+  event-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.event
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service des congés
+  leave-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.leave
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service des notifications
+  notification-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.notification
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=
+      - SMTP_PASSWORD=
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+  # Service des rapports
+  report-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.report
+    ports:
+      - "8006:8006"
+    environment:
+      - DATABASE_URL=postgresql://hrlead:hrlead123@postgres:5432/hrlead
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hrlead-network
+
+volumes:
+  postgres_data:
+
+networks:
+  hrlead-network:
+    driver: bridge

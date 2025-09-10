@@ -1,0 +1,267 @@
+openapi: 3.0.3
+info:
+  title: HR Event & Leave Management API
+  version: 1.0.0
+  description: Backend API for managing employees, HR events, leave requests, and reporting.
+
+servers:
+  - url: http://localhost:8000/api
+
+paths:
+  /employees:
+    get:
+      summary: List employees
+      responses:
+        "200":
+          description: List of employees
+    post:
+      summary: Create new employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "201":
+          description: Employee created
+
+  /employees/{id}:
+    get:
+      summary: Get employee by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee details
+    put:
+      summary: Update employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "200":
+          description: Employee updated
+    delete:
+      summary: Delete employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Employee deleted
+
+  /events:
+    get:
+      summary: List HR events
+      responses:
+        "200":
+          description: List of events
+    post:
+      summary: Create new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        "201":
+          description: Event created
+
+  /events/{id}:
+    get:
+      summary: Get event by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event details
+    put:
+      summary: Update event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        "200":
+          description: Event updated
+    delete:
+      summary: Delete event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Event deleted
+
+  /leaves:
+    get:
+      summary: List leave requests
+      responses:
+        "200":
+          description: List of leave requests
+    post:
+      summary: Create leave request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequest"
+      responses:
+        "201":
+          description: Leave request created
+
+  /leaves/{id}:
+    get:
+      summary: Get leave request by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Leave request details
+    put:
+      summary: Update leave request (approval workflow)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequest"
+      responses:
+        "200":
+          description: Leave request updated
+    delete:
+      summary: Delete leave request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Leave request deleted
+
+  /reports:
+    get:
+      summary: Generate HR analytics
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Report data
+
+components:
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        department:
+          type: string
+        role:
+          type: string
+        seniority:
+          type: string
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [training, seminar, onboarding, team_building, other]
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        organizer:
+          type: string
+
+    LeaveRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        type:
+          type: string
+          enum: [annual, sick, personal, special]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        reason:
+          type: string
